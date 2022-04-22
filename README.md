@@ -51,6 +51,10 @@ set -x SECRET_KEY 85856417bfb2e9aebc495e769f478020425cfc2bb7dab102a94f2de2423d82
 uvicorn main:app --reload
 ```
 
-This will stand up a simple local server you can hit.
+This will stand up a simple local server you can reach.
+
+Check `localhost:8000/docs` or `localhost:8000/redoc` to learn more about what is actually available.
+
+## Authentication
 
 Authentication is currently implemented with no backend, however. So until I implement that this doesn't work.
