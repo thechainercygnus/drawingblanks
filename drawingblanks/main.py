@@ -1,13 +1,17 @@
 import os
 from datetime import datetime, timedelta
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-import db_names
+import database
+import helpers
+import namers
+import schemas
+from schemas import Token, TokenData, User, UserInDB
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'aMadSwedeINDEED!')
 ALGORITHM = "HS256"
@@ -54,29 +58,12 @@ fake_users_db = {
     }
 }
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
-
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+get_db = database.get_db
 
 app = FastAPI(
     title="Drawing Blanks",
@@ -152,6 +139,27 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
+@v1.get("/health", tags=["Health"])
+def health_up():
+    return {"status": "UP"}
+
+@v1.post("/users/create/", response_model=schemas.ShowUser, tags=["Authorization"])
+def create_user(request: schemas.User, db: Session = Depends(get_db)):
+    return helpers.user.create(request,db)
+
+@v1.get("/users/me/", response_model=User,tags=["Authorization"])
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
+    return current_user
+
+@v1.get("/users/{id}",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.ShowUser,
+    response_model_exclude={"books": {"__all__": {"user_id"}}},
+    tags=["Authorization"]
+)
+def show(id: int, response: Response, db: Session = Depends(get_db)):
+    return helpers.user.show(id, db)
+
 @v1.post("/token/", response_model=Token, tags=["Authorization"])
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
@@ -168,20 +176,16 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@v1.get("/users/me/", response_model=User,tags=["Authorization"])
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user
-
-@v1.get("/names/available", tags=["Names"])
+@v1.get("/names/available/", tags=["Names"])
 def list_available_name_generators():
     return {"projects": {
         "simple": "/names/projects/simple",
         "custom": ""
     }}
 
-project_namer = db_names.ProjectNamer()
+project_namer = namers.ProjectNamer()
 
-@v1.get("/names/projects/simple", tags=["Names"])
+@v1.get("/names/projects/simple/", tags=["Names"])
 def get_new_project_name(token: str = Depends(oauth2_scheme)):
     return project_namer.get_name()
 
