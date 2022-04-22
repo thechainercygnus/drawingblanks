@@ -25,7 +25,7 @@ Generate useful names for random needs
 Generate new project names.
 
 * **Simple** Create a simple 3 word, hyphenated project name.
-* **Custom** Parameter rich capabilities to create just the right random project name.
+* **Custom** Parameter rich capabilities to create just the right random project name. (_not implemented_)
 """
 
 # Replace with SQLite Database
