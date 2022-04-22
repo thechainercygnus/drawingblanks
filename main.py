@@ -28,6 +28,21 @@ Generate new project names.
 * **Custom** Parameter rich capabilities to create just the right random project name. (_not implemented_)
 """
 
+tags_metadata = [
+    {
+        "name": "Authorization",
+        "description": "These endpoints handle the authorization flows."
+    },
+    {
+        "name": "Names",
+        "description": "Leverages WordsAPI to generate various names. **REQUIRES RAPID API ACCOUNT**",
+        "externalDocs": {
+            "description": "WordsAPI",
+            "url": "https://rapidapi.com/dpventures/api/wordsapi",
+        },
+    },
+]
+
 # Replace with SQLite Database
 fake_users_db = {
     "johndoe": {
@@ -69,9 +84,13 @@ app = FastAPI(
     version="0.0.1",
     contact = {
         "name": "Bryce Jenkins",
+        "url": "https://brycejenkins.net",
         "email": "bryce@brycejenkins.net"
-    }
+    },
+    openapi_tags=tags_metadata,
 )
+v1 = FastAPI(docs_url="/")
+
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -133,7 +152,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
-@app.post("/token", response_model=Token, tags=["Authorization"])
+@v1.post("/token/", response_model=Token, tags=["Authorization"])
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
     if not user:
@@ -149,17 +168,21 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/users/me/", response_model=User,tags=["Authorization"])
+@v1.get("/users/me/", response_model=User,tags=["Authorization"])
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
 
-@app.get("/names/", tags=["Names"])
-def list_name_modules():
-    return {"projects": "generate project names"}
+@v1.get("/names/available", tags=["Names"])
+def list_available_name_generators():
+    return {"projects": {
+        "simple": "/names/projects/simple",
+        "custom": ""
+    }}
 
 project_namer = db_names.ProjectNamer()
 
-@app.get("/names/projects/simple", tags=["Names"])
+@v1.get("/names/projects/simple", tags=["Names"])
 def get_new_project_name(token: str = Depends(oauth2_scheme)):
     return project_namer.get_name()
 
+app.mount("/api/v1", v1)
