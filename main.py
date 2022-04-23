@@ -42,7 +42,7 @@ v1 = FastAPI(title="Drawing Blanks",
     version="0.0.1",
     contact = {
         "name": "Bryce Jenkins",
-        "url": "https://brycejenkins.net",
+        "url": "https://github.com/thechainercygnus/drawingblanks",
         "email": "bryce@durish.xyz"
     },
     openapi_tags=tags_metadata,
