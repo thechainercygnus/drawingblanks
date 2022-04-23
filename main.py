@@ -65,4 +65,4 @@ project_namer = db_names.ProjectNamer()
 def get_new_project_name():
     return project_namer.get_name()
 
-app.mount("/api/v1", v1)
+app.mount("/v1", v1)
