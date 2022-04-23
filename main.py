@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 
 import db_names
+from schemas import ProjectName
 
 description="""
 Drawing Blanks is a tool for helping me name things when I am lacking an idea.
@@ -21,10 +22,6 @@ Generate new project names.
 
 tags_metadata = [
     {
-        "name": "Authorization",
-        "description": "These endpoints handle the authorization flows."
-    },
-    {
         "name": "Names",
         "description": "Leverages WordsAPI to generate various names. **REQUIRES RAPID API ACCOUNT**",
         "externalDocs": {
@@ -33,7 +30,6 @@ tags_metadata = [
         },
     },
 ]
-
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -62,7 +58,8 @@ def list_available_name_generators():
 project_namer = db_names.ProjectNamer()
 
 @v1.get("/names/projects/simple", tags=["Names"])
-def get_new_project_name():
+def get_new_project_name() -> ProjectName:
     return project_namer.get_name()
+
 
 app.mount("/v1", v1)
