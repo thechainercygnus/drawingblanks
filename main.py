@@ -47,7 +47,7 @@ v1 = FastAPI(title="Drawing Blanks",
     contact = {
         "name": "Bryce Jenkins",
         "url": "https://brycejenkins.net",
-        "email": "bryce@brycejenkins.net"
+        "email": "bryce@durish.xyz"
     },
     openapi_tags=tags_metadata,
     docs_url="/")
